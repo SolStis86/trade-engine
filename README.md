@@ -76,6 +76,7 @@ Example output:
 | [`docs/03-initial-feature-selection.md`](docs/03-initial-feature-selection.md) | Initial MVP feature set and phased selection plan. |
 | [`docs/04-policy-labelling-and-training.md`](docs/04-policy-labelling-and-training.md) | How to create labels, simulate policies and train the selector. |
 | [`docs/05-implementation-roadmap.md`](docs/05-implementation-roadmap.md) | Practical build plan and suggested repository modules. |
+| [`docs/06-technical-architecture.md`](docs/06-technical-architecture.md) | Alpaca ingest, Rust compute core and service/language boundaries. |
 
 ## Key principles
 
@@ -96,6 +97,29 @@ Example output:
 
 6. **Version everything**  
    Feature schemas, label definitions, simulation assumptions and model versions must all be tracked.
+
+## Technical direction
+
+The initial technical direction is:
+
+```text
+Alpaca ingestion: TypeScript/NestJS worker
+Canonical candle store: Postgres + Parquet
+Feature calculation: Rust
+Backtesting: Rust
+Policy simulation: Rust
+ML training: Python
+API/dashboard: TypeScript
+```
+
+The first technical milestone should be:
+
+```text
+Alpaca historical ingest
+  -> normalized candles
+  -> Rust feature generation
+  -> Parquet/Postgres feature snapshots
+```
 
 ## Initial MVP goal
 
