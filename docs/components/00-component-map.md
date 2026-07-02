@@ -6,7 +6,7 @@ This document maps the main components of the trade engine and explains how data
 
 ```mermaid
 flowchart TD
-    A[Alpaca Market Data API] --> B[Ingestion Worker]
+    A[Alpaca Market Data API] --> B[Rust Ingestion Worker]
     B --> C[Raw Payload Audit]
     B --> D[Canonical Candle Store]
     D --> E[Rust Feature Engine]
@@ -38,7 +38,7 @@ flowchart TD
 
 | Component | Runtime | Purpose |
 | --- | --- | --- |
-| Ingestion Worker | TypeScript / NestJS initially | Pull historical and live market data from Alpaca and normalize it. |
+| Ingestion Worker | Rust | Pull historical and live market data from Alpaca and normalize it into canonical candles. |
 | Canonical Candle Store | Postgres + Parquet | Store clean OHLCV candles and provider metadata. |
 | Feature Engine | Rust | Generate deterministic market-state features from candle data. |
 | Regime Classifier | Rust initially | Classify trend, range, volatility, liquidity and session states. |
@@ -49,17 +49,17 @@ flowchart TD
 | Model Registry | TypeScript + DB / MLflow later | Track model versions, feature schemas and promotion state. |
 | Live Inference Engine | Rust + Python/ML service | Score current feature snapshots and recommend policy behaviour. |
 | Risk Engine | Rust | Apply deterministic vetoes and hard risk controls. |
-| Trade Plan Builder | TypeScript or Rust | Convert selected policy into a structured trade plan. |
-| Outcome Tracker | TypeScript worker | Track whether live recommendations won, lost, waited or expired. |
-| API / Dashboard | TypeScript | Expose reports, decisions, features and model performance. |
+| Trade Plan Builder | Rust initially, TypeScript presentation later | Convert selected policy into a structured trade plan. |
+| Outcome Tracker | Rust worker initially | Track whether live recommendations won, lost, waited or expired. |
+| API / Dashboard | TypeScript later | Expose reports, decisions, features and model performance. |
 
 ## Batch research flow
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant API as API / CLI
-    participant Ingest as Ingestion Worker
+    participant CLI as Rust CLI
+    participant Ingest as Rust Ingestion Worker
     participant Store as Candle Store
     participant Feature as Rust Feature Engine
     participant Policy as Policy Engine
@@ -67,20 +67,20 @@ sequenceDiagram
     participant Label as Labelling Engine
     participant ML as ML Training Service
 
-    User->>API: Request historical profile for symbol/timeframe
-    API->>Ingest: Fetch historical candles from Alpaca
+    User->>CLI: Request historical profile for symbol/timeframe
+    CLI->>Ingest: Fetch historical candles from Alpaca
     Ingest->>Store: Persist canonical candles
-    API->>Feature: Generate feature snapshots
+    CLI->>Feature: Generate feature snapshots
     Feature->>Store: Read candles
-    Feature-->>API: Write feature snapshots
-    API->>Policy: Generate candidate policies
+    Feature-->>CLI: Write feature snapshots
+    CLI->>Policy: Generate candidate policies
     Policy-->>Backtest: Candidate policies
     Backtest->>Store: Read candles and features
-    Backtest-->>API: Persist simulation results
-    API->>Label: Generate best-policy labels
-    Label-->>API: Persist training examples
-    API->>ML: Train and validate model
-    ML-->>API: Model metrics and artifacts
+    Backtest-->>CLI: Persist simulation results
+    CLI->>Label: Generate best-policy labels
+    Label-->>CLI: Persist training examples
+    CLI->>ML: Train and validate model
+    ML-->>CLI: Model metrics and artifacts
 ```
 
 ## Live flow
@@ -88,7 +88,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Alpaca
-    participant Ingest as Live Ingestion Worker
+    participant Ingest as Rust Live Ingestion Worker
     participant Feature as Rust Feature Engine
     participant Regime as Regime Classifier
     participant Inference as Live Inference Engine
@@ -116,23 +116,25 @@ Recommended dependency direction:
 
 ```mermaid
 flowchart LR
-    A[market-core] --> B[feature-engine]
-    A --> C[policy-engine]
-    A --> D[backtest-engine]
-    B --> D
-    C --> D
-    B --> E[regime-classifier]
-    B --> F[risk-engine]
-    C --> F
-    D --> G[labelling-engine]
-    G --> H[ml-training]
-    H --> I[model-registry]
+    A[market-core] --> B[alpaca-ingest]
+    A --> C[feature-engine]
+    A --> D[policy-engine]
+    A --> E[backtest-engine]
+    C --> E
+    D --> E
+    C --> F[regime-classifier]
+    C --> G[risk-engine]
+    D --> G
+    E --> H[labelling-engine]
+    H --> I[ml-training]
+    I --> J[model-registry]
 ```
 
 Rules:
 
 ```text
 market-core should not depend on any higher-level engine.
+alpaca-ingest should normalize provider data into market-core types.
 feature-engine should not depend on ML models.
 policy-engine should not depend on backtest results.
 risk-engine should be deterministic and independently testable.
