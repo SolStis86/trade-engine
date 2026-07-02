@@ -77,6 +77,22 @@ Example output:
 | [`docs/04-policy-labelling-and-training.md`](docs/04-policy-labelling-and-training.md) | How to create labels, simulate policies and train the selector. |
 | [`docs/05-implementation-roadmap.md`](docs/05-implementation-roadmap.md) | Practical build plan and suggested repository modules. |
 | [`docs/06-technical-architecture.md`](docs/06-technical-architecture.md) | Alpaca ingest, Rust compute core and service/language boundaries. |
+| [`docs/components/00-component-map.md`](docs/components/00-component-map.md) | Detailed component map, dependency direction and flow diagrams. |
+
+## Component documentation
+
+| Component | Document |
+| --- | --- |
+| Ingestion Worker | [`docs/components/01-ingestion-worker.md`](docs/components/01-ingestion-worker.md) |
+| Candle Store | [`docs/components/02-candle-store.md`](docs/components/02-candle-store.md) |
+| Rust Feature Engine | [`docs/components/03-rust-feature-engine.md`](docs/components/03-rust-feature-engine.md) |
+| Regime Classifier | [`docs/components/04-regime-classifier.md`](docs/components/04-regime-classifier.md) |
+| Policy Engine | [`docs/components/05-policy-engine.md`](docs/components/05-policy-engine.md) |
+| Backtest Engine | [`docs/components/06-backtest-engine.md`](docs/components/06-backtest-engine.md) |
+| Labelling Engine | [`docs/components/07-labelling-engine.md`](docs/components/07-labelling-engine.md) |
+| ML Training Service | [`docs/components/08-ml-training-service.md`](docs/components/08-ml-training-service.md) |
+| Live Inference and Risk | [`docs/components/09-live-inference-and-risk.md`](docs/components/09-live-inference-and-risk.md) |
+| API and Dashboard | [`docs/components/10-api-dashboard.md`](docs/components/10-api-dashboard.md) |
 
 ## Key principles
 
