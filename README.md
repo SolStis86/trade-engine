@@ -43,29 +43,31 @@ The system should eventually answer:
 Given this instrument, timeframe, session, volatility, trend, spread, structure and live candle behaviour, what is the best way to trade right now?
 ```
 
-Example output:
+## Rust workspace
 
-```json
-{
-  "decision": "trade",
-  "direction": "long",
-  "entry_type": "pullback_confirmation",
-  "stop_type": "structural_low",
-  "target_type": "prior_session_high",
-  "management": "partial_then_trail",
-  "expected_r": 0.42,
-  "win_probability": 0.58,
-  "confidence": 0.71,
-  "regime": "bullish_high_volatility_london_pullback",
-  "reason": [
-    "Price is above session VWAP",
-    "Higher timeframe trend is bullish",
-    "ATR percentile is elevated but not extreme",
-    "Spread is inside normal range",
-    "Recent pullback held above structure"
-  ]
-}
+The first implementation is Rust-first for the market-data path.
+
+```text
+crates/
+  market-core/        Core candle, symbol, timeframe and validation types.
+  alpaca-ingest/      Alpaca historical market-data ingest and normalization.
+  trade-engine-cli/   Command-line entrypoint for ingest and future jobs.
 ```
+
+Historical Alpaca stock bars can be pulled with:
+
+```bash
+cargo run -p trade-engine-cli -- \
+  ingest historical-alpaca-stock-bars \
+  --symbol AAPL \
+  --timeframe 1Min \
+  --start 2025-01-01T00:00:00Z \
+  --end 2025-01-02T00:00:00Z \
+  --feed iex \
+  --output data/aapl-1min.jsonl
+```
+
+See [`docs/07-rust-ingest-quickstart.md`](docs/07-rust-ingest-quickstart.md).
 
 ## Documentation
 
@@ -77,6 +79,7 @@ Example output:
 | [`docs/04-policy-labelling-and-training.md`](docs/04-policy-labelling-and-training.md) | How to create labels, simulate policies and train the selector. |
 | [`docs/05-implementation-roadmap.md`](docs/05-implementation-roadmap.md) | Practical build plan and suggested repository modules. |
 | [`docs/06-technical-architecture.md`](docs/06-technical-architecture.md) | Alpaca ingest, Rust compute core and service/language boundaries. |
+| [`docs/07-rust-ingest-quickstart.md`](docs/07-rust-ingest-quickstart.md) | Rust ingest quickstart and CLI usage. |
 | [`docs/components/00-component-map.md`](docs/components/00-component-map.md) | Detailed component map, dependency direction and flow diagrams. |
 
 ## Component documentation
@@ -119,22 +122,24 @@ Example output:
 The initial technical direction is:
 
 ```text
-Alpaca ingestion: TypeScript/NestJS worker
+Alpaca ingestion: Rust
+Canonical candle types: Rust
 Canonical candle store: Postgres + Parquet
 Feature calculation: Rust
 Backtesting: Rust
 Policy simulation: Rust
 ML training: Python
-API/dashboard: TypeScript
+API/dashboard: TypeScript later
 ```
 
-The first technical milestone should be:
+The first technical milestone is:
 
 ```text
 Alpaca historical ingest
   -> normalized candles
+  -> JSONL output
+  -> Parquet/Postgres persistence
   -> Rust feature generation
-  -> Parquet/Postgres feature snapshots
 ```
 
 ## Initial MVP goal
@@ -184,7 +189,3 @@ management:
 ```
 
 This gives enough combinations to be useful, but not so many that labelling, debugging and validation become unmanageable.
-
-## Repository status
-
-This repository currently contains the documentation foundation for the trade engine. Implementation packages and services should be added once the feature schema and labelling design are stable.
